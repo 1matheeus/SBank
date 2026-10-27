@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 64" fill="none" role="img" aria-label="S Bank">
+  <defs>
+    <linearGradient id="sb-bg-full" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7C5CFF"/>
+      <stop offset="1" stop-color="#00D4A6"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="18" fill="url(#sb-bg-full)"/>
+  <path d="M43 18H27a7 7 0 0 0 0 14h10a7 7 0 0 1 0 14H19" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="49.5" cy="14.5" r="3.5" fill="#D9FF5C"/>
+  <text x="80" y="43" font-family="Sora, 'Plus Jakarta Sans', system-ui, sans-serif" font-size="30" font-weight="700" letter-spacing="-0.5" fill="#0B0F1A">S Bank</text>
+</svg>
