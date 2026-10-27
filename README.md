@@ -1,6 +1,26 @@
 # S Bank
 
-Landing page de um banco digital moderno, feita em HTML, CSS e JavaScript puros, sem build.
+Site do S Bank com landing page (`/`) e um **app de finanças pessoais** (`/app/`), em HTML, CSS e JavaScript puros, sem build.
+
+## App de finanças (`app/`)
+
+- **Aportes:** registre ganhos e gastos com valor, descrição, data e categoria (Alimentação, Moradia, Transporte, Assinaturas, Roupas, Saúde, Lazer, Educação… e categorias próprias).
+- **Extrato:** movimentações do mês agrupadas por dia, com busca e filtros por tipo e categoria. Toque em uma movimentação para editar ou excluir.
+- **Gráficos:** gastos/ganhos por categoria, ganhos x gastos dos últimos 6 meses e gasto acumulado no mês.
+- **IA:** o Claude (API da Anthropic) analisa seus dados e devolve resumo, alertas, dicas e gráficos. Usa a sua chave da API, salva só no aparelho.
+- **Dados:** ficam no navegador do aparelho. Em *Ajustes* dá para exportar (`.json` e `.csv`), importar, ou sincronizar direto com um arquivo no GitHub.
+- **iPhone:** no Safari, toque em *Compartilhar → Adicionar à Tela de Início* para usar como app em tela cheia (funciona offline, exceto a IA).
+
+### Onde ficam os dados
+
+O arquivo exportado vai em `data/`. O workflow `.github/workflows/pages.yml` publica só o site e o app no Pages; a pasta `data/` nunca é publicada.
+
+### Bibliotecas incluídas
+
+- `app/vendor/chart.umd.js`: Chart.js 4.4.7
+- `app/vendor/anthropic.mjs`: `@anthropic-ai/sdk` 1.3.0 empacotado com esbuild
+
+Ao alterar arquivos do app, aumente a versão de `CACHE` em `app/sw.js` para os aparelhos baixarem a atualização.
 
 ## Identidade visual
 

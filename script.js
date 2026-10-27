@@ -68,12 +68,10 @@ aporte.addEventListener('input', simulate);
 prazo.addEventListener('input', simulate);
 simulate();
 
-// Formulário de abertura de conta (demo)
+// Formulário do topo leva ao app
 document.getElementById('abrir-conta').addEventListener('submit', (e) => {
   e.preventDefault();
-  const btn = e.target.querySelector('button');
-  btn.textContent = 'Pronto! Verifique seu e-mail ✓';
-  btn.disabled = true;
+  location.href = 'app/';
 });
 
 document.getElementById('year').textContent = new Date().getFullYear();

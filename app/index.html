@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>S Bank</title>
+  <meta name="description" content="S Bank: controle seus ganhos e gastos, veja gráficos e receba análises com IA.">
+  <meta name="theme-color" content="#F7F8FC" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0B0F1A" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="S Bank">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/logo-mark.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="app.css">
+  <script src="vendor/chart.umd.js" defer></script>
+  <script src="app.js" type="module"></script>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar" aria-label="Navegação">
+      <a class="brand" href="../">
+        <img src="icons/logo-mark.svg" alt="" width="34" height="34">
+        <span>S Bank</span>
+      </a>
+      <nav class="tabs" id="tabs">
+        <button class="tab" data-view="inicio" aria-label="Início">
+          <svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
+          <span>Início</span>
+        </button>
+        <button class="tab" data-view="extrato" aria-label="Extrato">
+          <svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3"/></svg>
+          <span>Extrato</span>
+        </button>
+        <button class="tab tab--add" data-view="aportes" aria-label="Aportes">
+          <span class="tab__plus"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>
+          <span>Aportes</span>
+        </button>
+        <button class="tab" data-view="graficos" aria-label="Gráficos">
+          <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+          <span>Gráficos</span>
+        </button>
+        <button class="tab" data-view="ia" aria-label="IA">
+          <svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.6L18 9.5l-4.2 1.9L12 16l-1.8-4.6L6 9.5l4.2-1.9zM19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z"/></svg>
+          <span>IA</span>
+        </button>
+      </nav>
+      <button class="side-settings" data-open="ajustes">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+        <span>Ajustes e dados</span>
+      </button>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <div class="topbar__title">
+          <img class="topbar__logo" src="icons/logo-mark.svg" alt="" width="30" height="30">
+          <h1 id="viewTitle">Início</h1>
+        </div>
+        <div class="month" id="monthNav">
+          <button class="icon-btn" id="prevMonth" aria-label="Mês anterior"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+          <span id="monthLabel">—</span>
+          <button class="icon-btn" id="nextMonth" aria-label="Próximo mês"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+        </div>
+        <button class="icon-btn topbar__settings" data-open="ajustes" aria-label="Ajustes e dados">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
+        </button>
+      </header>
+
+      <main class="views">
+        <!-- INÍCIO -->
+        <section class="view" id="view-inicio" data-title="Início">
+          <div class="home-grid">
+            <div class="balance-card">
+              <span class="balance-card__label">Saldo total</span>
+              <strong class="balance-card__value" id="totalBalance">R$ 0,00</strong>
+              <div class="balance-card__row">
+                <div><span>Ganhos no mês</span><b id="monthIncome">R$ 0</b></div>
+                <div><span>Gastos no mês</span><b id="monthExpense">R$ 0</b></div>
+              </div>
+            </div>
+
+            <div class="stats">
+              <div class="stat"><span>Sobrou no mês</span><strong id="monthNet">R$ 0</strong></div>
+              <div class="stat"><span>Taxa de economia</span><strong id="savingsRate">0%</strong></div>
+            </div>
+
+            <div class="card">
+              <div class="card__head"><h2>Maiores gastos do mês</h2><button class="link" data-goto="graficos">Ver gráficos</button></div>
+              <div id="topCategories" class="bars"></div>
+            </div>
+
+            <div class="card">
+              <div class="card__head"><h2>Últimas movimentações</h2><button class="link" data-goto="extrato">Ver extrato</button></div>
+              <ul class="tx-list" id="recentList"></ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- APORTES -->
+        <section class="view" id="view-aportes" data-title="Aportes">
+          <form class="entry" id="entryForm" autocomplete="off">
+            <div class="segmented" role="radiogroup" aria-label="Tipo">
+              <button type="button" class="segmented__btn" data-type="expense" role="radio">Gasto</button>
+              <button type="button" class="segmented__btn" data-type="income" role="radio">Ganho</button>
+            </div>
+
+            <label class="amount">
+              <span class="sr-only">Valor</span>
+              <input id="amount" inputmode="numeric" enterkeyhint="done" value="R$ 0,00" aria-label="Valor">
+            </label>
+
+            <div class="field">
+              <label for="desc">Descrição</label>
+              <input id="desc" type="text" placeholder="Ex.: Mercado, Netflix, Salário" maxlength="80" enterkeyhint="next">
+            </div>
+
+            <div class="field">
+              <span class="field__label">Categoria</span>
+              <div class="chips" id="categoryChips"></div>
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label for="date">Data</label>
+                <input id="date" type="date" required>
+              </div>
+            </div>
+
+            <div class="entry__actions">
+              <button type="submit" class="btn btn--primary btn--block" id="saveBtn">Adicionar</button>
+              <button type="button" class="btn btn--ghost btn--block" id="cancelEdit" hidden>Cancelar edição</button>
+              <button type="button" class="btn btn--danger btn--block" id="deleteBtn" hidden>Excluir</button>
+            </div>
+          </form>
+
+          <div class="card">
+            <div class="card__head"><h2>Adicionados recentemente</h2></div>
+            <ul class="tx-list" id="addedList"></ul>
+          </div>
+        </section>
+
+        <!-- EXTRATO -->
+        <section class="view" id="view-extrato" data-title="Extrato">
+          <div class="filters">
+            <input type="search" id="search" placeholder="Buscar no extrato" aria-label="Buscar">
+            <div class="filters__row">
+              <div class="segmented segmented--sm" id="typeFilter">
+                <button type="button" class="segmented__btn is-active" data-filter="all">Tudo</button>
+                <button type="button" class="segmented__btn" data-filter="income">Ganhos</button>
+                <button type="button" class="segmented__btn" data-filter="expense">Gastos</button>
+              </div>
+              <select id="catFilter" aria-label="Categoria"><option value="">Todas as categorias</option></select>
+            </div>
+          </div>
+          <div class="statement-summary" id="statementSummary"></div>
+          <div id="statement"></div>
+        </section>
+
+        <!-- GRÁFICOS -->
+        <section class="view" id="view-graficos" data-title="Gráficos">
+          <div class="charts-grid">
+            <div class="card">
+              <div class="card__head">
+                <h2 id="donutTitle">Gastos por categoria</h2>
+                <div class="segmented segmented--sm" id="donutType">
+                  <button type="button" class="segmented__btn is-active" data-type="expense">Gastos</button>
+                  <button type="button" class="segmented__btn" data-type="income">Ganhos</button>
+                </div>
+              </div>
+              <div class="donut-wrap">
+                <div class="chart-box chart-box--donut"><canvas id="donutChart" role="img" aria-label="Gráfico de rosca por categoria"></canvas>
+                  <div class="donut-center"><span>Total</span><strong id="donutTotal">R$ 0</strong></div>
+                </div>
+                <ul class="legend" id="donutLegend"></ul>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card__head"><h2>Ganhos x gastos (6 meses)</h2></div>
+              <div class="chart-box"><canvas id="barChart" role="img" aria-label="Ganhos e gastos dos últimos 6 meses"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card__head"><h2>Gasto acumulado no mês</h2></div>
+              <div class="chart-box"><canvas id="lineChart" role="img" aria-label="Gasto acumulado ao longo do mês"></canvas></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- IA -->
+        <section class="view" id="view-ia" data-title="IA">
+          <div class="ai-hero">
+            <div class="ai-hero__icon">✦</div>
+            <div>
+              <h2>Analista S</h2>
+              <p class="muted">A IA lê seus ganhos e gastos e devolve um resumo, alertas e gráficos.</p>
+            </div>
+          </div>
+          <div class="ai-nokey card" id="aiNoKey" hidden>
+            <p>Para usar a IA, adicione sua chave da API da Anthropic em <b>Ajustes</b>. Ela fica salva só neste aparelho.</p>
+            <button class="btn btn--primary" data-open="ajustes">Abrir ajustes</button>
+          </div>
+          <div class="ai-prompts">
+            <button class="prompt-chip" data-prompt="Analise meus ganhos e gastos deste mês. O que se destacou e onde estou gastando demais?">📊 Analisar o mês</button>
+            <button class="prompt-chip" data-prompt="Compare meus últimos 6 meses. Quais categorias cresceram, quais caíram e qual a tendência?">📈 Comparar meses</button>
+            <button class="prompt-chip" data-prompt="Onde posso economizar? Sugira cortes concretos com valores estimados por mês.">✂️ Onde economizar</button>
+            <button class="prompt-chip" data-prompt="Monte um orçamento mensal por categoria baseado no meu histórico, buscando guardar pelo menos 20% do que ganho.">🎯 Criar orçamento</button>
+          </div>
+          <form class="ai-ask" id="aiForm">
+            <textarea id="aiQuestion" rows="2" placeholder="Pergunte algo sobre suas finanças…" aria-label="Pergunta para a IA"></textarea>
+            <button class="btn btn--primary" type="submit" id="aiSend">Analisar</button>
+          </form>
+          <div id="aiResults"></div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- AJUSTES -->
+  <div class="sheet" id="sheet-ajustes" role="dialog" aria-modal="true" aria-labelledby="ajustesTitle" hidden>
+    <div class="sheet__backdrop" data-close></div>
+    <div class="sheet__panel">
+      <div class="sheet__grip"></div>
+      <div class="sheet__head">
+        <h2 id="ajustesTitle">Ajustes e dados</h2>
+        <button class="icon-btn" data-close aria-label="Fechar"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+
+      <div class="settings-group">
+        <h3>Seus dados</h3>
+        <p class="muted small" id="dataInfo"></p>
+        <div class="btn-grid">
+          <button class="btn btn--primary" id="exportJson">Exportar dados (.json)</button>
+          <button class="btn btn--ghost" id="exportCsv">Exportar extrato (.csv)</button>
+          <label class="btn btn--ghost file-btn">Importar arquivo
+            <input type="file" id="importFile" accept="application/json,.json">
+          </label>
+        </div>
+        <p class="muted small">Exporte o arquivo e envie para a pasta <code>data/</code> do seu repositório. Para trazer de volta, use “Importar arquivo”.</p>
+      </div>
+
+      <div class="settings-group">
+        <h3>Sincronizar com o GitHub <span class="tag">opcional</span></h3>
+        <p class="muted small">Envia e baixa o arquivo de dados direto do repositório, sem precisar fazer upload manual. Use um token “fine-grained” com permissão <b>Contents: Read and write</b> apenas no repositório de dados.</p>
+        <div class="field"><label for="ghRepo">Repositório (dono/nome)</label><input id="ghRepo" placeholder="1matheeus/sbank" autocapitalize="off" spellcheck="false"></div>
+        <div class="field"><label for="ghPath">Caminho do arquivo</label><input id="ghPath" placeholder="data/sbank-dados.json" autocapitalize="off" spellcheck="false"></div>
+        <div class="field"><label for="ghToken">Token do GitHub</label><input id="ghToken" type="password" placeholder="github_pat_…" autocapitalize="off" spellcheck="false"></div>
+        <div class="btn-grid">
+          <button class="btn btn--primary" id="ghPush">Enviar para o GitHub</button>
+          <button class="btn btn--ghost" id="ghPull">Baixar do GitHub</button>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <h3>Inteligência artificial</h3>
+        <p class="muted small">A análise usa a API da Anthropic (Claude). Crie uma chave em console.anthropic.com. Ela fica salva somente neste aparelho e nunca vai para o arquivo exportado.</p>
+        <div class="field"><label for="apiKey">Chave da API</label><input id="apiKey" type="password" placeholder="sk-ant-…" autocapitalize="off" spellcheck="false"></div>
+      </div>
+
+      <div class="settings-group">
+        <h3>Categorias</h3>
+        <div class="cat-manage" id="catManage"></div>
+        <form class="cat-add" id="catAddForm">
+          <input id="catEmoji" maxlength="4" placeholder="🙂" aria-label="Emoji">
+          <input id="catName" maxlength="24" placeholder="Nova categoria" aria-label="Nome da categoria" required>
+          <select id="catType" aria-label="Tipo"><option value="expense">Gasto</option><option value="income">Ganho</option></select>
+          <button class="btn btn--primary" type="submit">Criar</button>
+        </form>
+      </div>
+
+      <div class="settings-group">
+        <h3>Zona de perigo</h3>
+        <div class="btn-grid">
+          <button class="btn btn--ghost" id="loadDemo">Carregar dados de exemplo</button>
+          <button class="btn btn--danger" id="wipeData">Apagar todos os dados</button>
+        </div>
+      </div>
+      <p class="muted small center">S Bank · seus dados ficam neste aparelho até você exportar.</p>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
