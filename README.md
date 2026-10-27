@@ -31,7 +31,8 @@ Ao alterar arquivos do app, aumente a versão de `CACHE` em `app/sw.js` para os 
 | Lima | `#D9FF5C` | Acento ("faísca" da logo, destaques) |
 | Ink | `#0B0F1A` | Texto e seções escuras |
 
-- **Tipografia:** Sora (títulos) + Inter (texto).
+- **Tipografia:** fonte do sistema (SF Pro no iPhone e no Mac), com espaçamento ajustado por tamanho e respeito ao tamanho de texto do iOS.
+- **Movimento:** molas interrompíveis (amortecimento + resposta, como no iOS), painéis arrastáveis com momento, deslizar para apagar e barra de abas de vidro. Respeita “Reduzir movimento” e “Reduzir transparência”.
 - **Logo:** um "S" geométrico de traço contínuo dentro de um quadrado arredondado com gradiente violeta→menta. A faísca lima no canto superior representa crescimento e rendimento.
   - `assets/logo-mark.svg`: só o símbolo (favicon e ícone do app)
   - `assets/logo.svg`: símbolo com o nome
