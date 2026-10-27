@@ -13,7 +13,7 @@ Site do S Bank com landing page (`/`) e um **app de finanças pessoais** (`/app/
 
 ### Onde ficam os dados
 
-O arquivo exportado vai em `data/`. O workflow `.github/workflows/pages.yml` publica só o site e o app no Pages; a pasta `data/` nunca é publicada.
+O arquivo exportado vai em `data/`. O workflow `.github/workflows/pages.yml` copia o site e o app para a branch `gh-pages` (fonte do Pages) a cada push na `main`; a pasta `data/` nunca é publicada. Como o repositório é público, guarde seus dados em um repositório privado separado.
 
 ### Bibliotecas incluídas
 
