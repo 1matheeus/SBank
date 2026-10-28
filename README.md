@@ -11,6 +11,10 @@ Site do S Bank com landing page (`/`) e um **app de finanças pessoais** (`/app/
 - **Dados:** ficam no navegador do aparelho. Em *Ajustes* dá para exportar (`.json` e `.csv`), importar, ou sincronizar direto com um arquivo no GitHub.
 - **iPhone:** no Safari, toque em *Compartilhar → Adicionar à Tela de Início* para usar como app em tela cheia (funciona offline, exceto a IA).
 
+### Compras do Apple Pay automáticas
+
+Uma automação “Transação” do app Atalhos grava cada compra paga com o iPhone em `inbox/compra-AAAAMMDD-HHmmss.json` no repositório privado de dados. Ao abrir, o app importa esses arquivos para o extrato, sugere a categoria (pela última vez que você usou aquele estabelecimento ou pelo nome) e apaga o arquivo.
+
 ### Onde ficam os dados
 
 O arquivo exportado vai em `data/`. O workflow `.github/workflows/pages.yml` copia o site e o app para a branch `gh-pages` (fonte do Pages) a cada push na `main`; a pasta `data/` nunca é publicada. Como o repositório é público, guarde seus dados em um repositório privado separado.

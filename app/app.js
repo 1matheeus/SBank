@@ -1167,6 +1167,83 @@ async function ghPull() {
   } catch (e) { toast(`GitHub: ${e.message}`); } finally { btn.disabled = false; }
 }
 
+// ---------- Compras do Apple Pay (atalho do iPhone → pasta inbox/ no GitHub) ----------
+// A automação "Transação" do app Atalhos grava cada compra em inbox/compra-AAAAMMDD-HHmmss.json.
+// Ao abrir o app, as compras novas entram no extrato e o arquivo é apagado.
+const CATEGORY_HINTS = [
+  ['alimentacao', /mercad|supermerc|padaria|panific|ifood|rappi|restaur|lanch|burger|pizz|caf[eé]|a[cç]ougue|hortifr|carrefour|p[aã]o de a[cç]|assa[ií]|atacad|mcdonald|bk |subway|outback|starbucks|sorvet|doceria|bistr|food/i],
+  ['transporte', /uber|\b99|posto|combust|shell|ipiranga|petrobras|estacion|metr[oô]|sem parar|veloe|conectcar|[oô]nibus|bilhete/i],
+  ['assinaturas', /netflix|spotify|apple\.com|icloud|prime video|amazon prime|disney|hbo|\bmax\b|youtube|deezer|globoplay|chatgpt|openai|anthropic|paramount|crunchyroll/i],
+  ['roupas', /renner|riachuelo|c&a|zara|shein|nike|adidas|centauro|hering|marisa|cea |lojas|vestu|cal[cç]ad/i],
+  ['saude', /farm|drogar|droga |raia|pacheco|pague menos|hospital|cl[ií]nica|laborat|odonto|[oó]tica|academia|smart ?fit/i],
+  ['lazer', /cinema|cinemark|ingresso|\bbar\b|show|steam|playstation|xbox|nintendo|teatro|museu|parque|viagem|hotel|airbnb/i],
+  ['educacao', /livrar|curso|udemy|alura|escola|faculdade|papelar|kindle/i],
+  ['moradia', /enel|light|sabesp|cemig|copel|condom|aluguel|g[aá]s|claro|vivo|\btim\b|internet|leroy|telhanorte|casa/i],
+];
+function guessCategory(merchant) {
+  const key = merchant.trim().toLowerCase();
+  // 1º: a categoria que você usou da última vez neste estabelecimento
+  const past = sortTx(data.transactions).find((t) => t.type === 'expense' && (t.description || '').trim().toLowerCase() === key);
+  if (past) return past.category;
+  const hit = CATEGORY_HINTS.find(([, re]) => re.test(merchant));
+  return hit && data.categories.some((c) => c.id === hit[0]) ? hit[0] : 'outros-gasto';
+}
+function parseAmount(v) {
+  if (typeof v === 'number') return v;
+  let txt = String(v || '').replace(/[^\d,.-]/g, '');
+  if (txt.includes(',')) txt = txt.replace(/\./g, '').replace(',', '.'); // formato brasileiro: 1.234,56
+  return Math.abs(parseFloat(txt));
+}
+function parseInboxFile(name, text) {
+  let obj;
+  try { obj = JSON.parse(text); } catch {
+    const pick = (k) => (text.match(new RegExp(`"${k}"\\s*:\\s*"([^"]*)"`)) || [])[1];
+    obj = { valor: pick('valor'), estabelecimento: pick('estabelecimento') };
+  }
+  const amount = parseAmount(obj.valor ?? obj.amount);
+  if (!Number.isFinite(amount) || amount <= 0) return null;
+  const m = name.match(/(\d{4})(\d{2})(\d{2})/);
+  const date = m ? `${m[1]}-${m[2]}-${m[3]}` : todayISO();
+  const merchant = String(obj.estabelecimento ?? obj.merchant ?? '').trim() || 'Compra Apple Pay';
+  return {
+    id: `applepay-${name.replace(/\.json$/, '')}`, type: 'expense', amount: Math.round(amount * 100) / 100,
+    category: guessCategory(merchant), description: merchant, date, source: 'applepay', createdAt: new Date().toISOString(),
+  };
+}
+let inboxBusy = false;
+let inboxLast = 0;
+async function checkInbox({ manual = false } = {}) {
+  const repo = (settings.ghRepo || '').trim();
+  if (!settings.ghToken || !/^[\w.-]+\/[\w.-]+$/.test(repo) || inboxBusy || !navigator.onLine) return;
+  if (!manual && Date.now() - inboxLast < 30000) return;
+  inboxBusy = true; inboxLast = Date.now();
+  const base = `https://api.github.com/repos/${repo}/contents/inbox`;
+  try {
+    const list = await gh(`${base}?t=${Date.now()}`);
+    const files = (Array.isArray(list) ? list : []).filter((f) => f.type === 'file' && f.name.endsWith('.json'));
+    if (!files.length) { if (manual) toast('Nenhuma compra nova do Apple Pay'); return; }
+    const added = [];
+    for (const f of files) {
+      const file = await gh(`${base}/${encodeURIComponent(f.name)}`);
+      const tx = file?.content ? parseInboxFile(f.name, b64decode(file.content)) : null;
+      if (tx && !data.transactions.some((t) => t.id === tx.id)) { data.transactions.push(tx); added.push(tx); }
+      persist(); // salva antes de apagar o arquivo, para nunca perder uma compra
+      await gh(`${base}/${encodeURIComponent(f.name)}`, { method: 'DELETE', body: JSON.stringify({ message: `Importa ${f.name} no S Bank`, sha: f.sha }) });
+    }
+    if (!added.length) return;
+    haptic();
+    render();
+    if (added.length === 1) {
+      const t = added[0];
+      toast(`${t.description}: ${brl(t.amount)} em ${catById(t.category).name}`, { label: 'Editar', run: () => openEntry(t.id) });
+    } else {
+      toast(`${added.length} compras do Apple Pay adicionadas`, { label: 'Ver', run: () => setView('extrato') });
+    }
+  } catch (e) {
+    if (manual) toast(`GitHub: ${e.message}`);
+  } finally { inboxBusy = false; }
+}
+
 // ---------- Ajustes ----------
 const themeSeg = segmented($('#themeSeg'), (v) => applyTheme(v));
 themeSeg.set(getTheme(), false);
@@ -1309,6 +1386,7 @@ function bind() {
   bindSetting('#ghToken', 'ghToken');
   $('#ghPush').addEventListener('click', ghPush);
   $('#ghPull').addEventListener('click', ghPull);
+  $('#inboxCheck').addEventListener('click', () => checkInbox({ manual: true }));
   $('#catAddForm').addEventListener('submit', addCategory);
   $('#loadDemo').addEventListener('click', () => { if (!data.transactions.length || confirm('Adicionar movimentações de exemplo aos seus dados?')) loadDemo(); });
   $('#wipeData').addEventListener('click', () => {
@@ -1333,6 +1411,9 @@ placeIndicator(false);
 if (location.hash === '#novo') openEntry();
 
 navigator.storage?.persist?.().catch(() => {});
+// Busca compras do Apple Pay ao abrir e sempre que o app volta para a tela
+checkInbox();
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkInbox(); });
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
