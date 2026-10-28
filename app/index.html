@@ -153,25 +153,39 @@
 
         <!-- IA -->
         <section class="view" id="view-ia" data-title="Análise IA">
-          <div class="ai-intro">
-            <div class="ai-intro__orb"><svg><use href="#i-sparkle"/></svg></div>
-            <p>Pergunte sobre seus gastos. A IA lê suas movimentações e responde com um resumo, alertas e gráficos.</p>
+          <div class="segmented" id="aiMode" role="tablist">
+            <span class="segmented__thumb"></span>
+            <button class="segmented__btn" data-value="daily">Diárias</button>
+            <button class="segmented__btn" data-value="ask">Perguntar</button>
           </div>
-          <div class="group ai-nokey" id="aiNoKey" hidden>
-            <p>Para usar a análise, adicione sua chave da API da Anthropic em Ajustes. Ela fica salva só neste aparelho.</p>
-            <button class="btn btn--tint pressable" data-settings>Abrir Ajustes</button>
+
+          <div id="aiDaily">
+            <div class="ai-intro">
+              <div class="ai-intro__orb"><svg><use href="#i-sparkle"/></svg></div>
+              <p>Todo dia às 10h, o Claude analisa o dia anterior e o mês até agora, usando o seu plano.</p>
+            </div>
+            <div id="dailyList"></div>
           </div>
-          <div class="chips-scroll ai-suggestions">
-            <button class="chip pressable" data-prompt="Analise meus ganhos e gastos deste mês. O que se destacou e onde estou gastando demais?">Analisar o mês</button>
-            <button class="chip pressable" data-prompt="Compare meus últimos 6 meses. Quais categorias cresceram, quais caíram e qual a tendência?">Comparar meses</button>
-            <button class="chip pressable" data-prompt="Onde posso economizar? Sugira cortes concretos com valores estimados por mês.">Onde economizar</button>
-            <button class="chip pressable" data-prompt="Monte um orçamento mensal por categoria baseado no meu histórico, buscando guardar pelo menos 20% do que ganho.">Criar orçamento</button>
+
+          <div id="aiAsk" hidden>
+            <div class="ai-intro">
+              <div class="ai-intro__orb"><svg><use href="#i-sparkle"/></svg></div>
+              <p>Pergunte sobre seus gastos. A IA lê suas movimentações e responde com um resumo, alertas e gráficos.</p>
+            </div>
+            <div class="chips-scroll ai-suggestions">
+              <button class="chip pressable" data-prompt="Analise meus ganhos e gastos deste mês. O que se destacou e onde estou gastando demais?">Analisar o mês</button>
+              <button class="chip pressable" data-prompt="Compare meus últimos 6 meses. Quais categorias cresceram, quais caíram e qual a tendência?">Comparar meses</button>
+              <button class="chip pressable" data-prompt="Onde posso economizar? Sugira cortes concretos com valores estimados por mês.">Onde economizar</button>
+              <button class="chip pressable" data-prompt="Monte um orçamento mensal por categoria baseado no meu histórico, buscando guardar pelo menos 20% do que ganho.">Criar orçamento</button>
+            </div>
+            <form class="composer" id="aiForm">
+              <textarea id="aiQuestion" rows="1" placeholder="Pergunte algo…" aria-label="Pergunta para a IA"></textarea>
+              <button class="composer__send pressable" type="submit" id="aiSend" aria-label="Enviar"><svg><use href="#i-up"/></svg></button>
+            </form>
+            <button class="btn btn--tint btn--block pressable claude-btn" id="openClaude">Analisar no app do Claude</button>
+            <p class="group-foot" id="aiNoKey">Sem chave da API, as perguntas abrem no app do Claude usando o seu plano: os dados são copiados e é só colar na conversa. Para respostas aqui dentro, adicione uma chave em Ajustes.</p>
+            <div id="aiResults"></div>
           </div>
-          <form class="composer" id="aiForm">
-            <textarea id="aiQuestion" rows="1" placeholder="Pergunte algo…" aria-label="Pergunta para a IA"></textarea>
-            <button class="composer__send pressable" type="submit" id="aiSend" aria-label="Enviar"><svg><use href="#i-up"/></svg></button>
-          </form>
-          <div id="aiResults"></div>
         </section>
       </main>
     </div>
@@ -267,11 +281,9 @@
           <label class="form__row"><span>Token</span><input id="ghToken" type="password" placeholder="github_pat_…" autocapitalize="off" spellcheck="false"></label>
         </div>
         <div class="group">
-          <button class="row-btn pressable" id="ghPush">Enviar para o GitHub</button>
-          <button class="row-btn pressable" id="ghPull">Baixar do GitHub</button>
-          <button class="row-btn pressable" id="inboxCheck">Buscar compras do Apple Pay</button>
+          <button class="row-btn pressable" id="ghSync">Sincronizar agora</button>
         </div>
-        <p class="group-foot">Use um repositório privado e um token “fine-grained” com permissão Contents: Read and write somente nele. As compras enviadas pelo atalho do iPhone (pasta inbox/) entram sozinhas sempre que você abre o app.</p>
+        <p class="group-foot">Use um repositório privado e um token “fine-grained” com permissão Contents: Read and write somente nele. Com o GitHub conectado, o app sincroniza sozinho: envia suas mudanças, traz as compras do Apple Pay (pasta inbox/) e as análises diárias (pasta analises/).</p>
 
         <h3 class="group-title">Análise com IA</h3>
         <div class="group form">

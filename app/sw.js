@@ -1,5 +1,5 @@
 // Mantém o app funcionando offline. Mude a versão a cada atualização dos arquivos.
-const CACHE = 'sbank-v5';
+const CACHE = 'sbank-v6';
 const SHELL = [
   './', 'index.html', 'app.css', 'app.js', 'manifest.webmanifest',
   'vendor/chart.umd.js', 'vendor/anthropic.mjs',

@@ -159,7 +159,7 @@ function haptic() {
 
 // ---------- Estado ----------
 function freshData() {
-  return { app: 'S Bank', version: 1, updatedAt: new Date().toISOString(), categories: structuredClone(DEFAULT_CATEGORIES), transactions: [], analyses: [] };
+  return { app: 'S Bank', version: 1, updatedAt: new Date().toISOString(), categories: structuredClone(DEFAULT_CATEGORIES), transactions: [], analyses: [], deleted: {}, daily: [] };
 }
 function loadJSON(key, fallback) {
   try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; } catch { return fallback; }
@@ -167,6 +167,9 @@ function loadJSON(key, fallback) {
 function saveJSON(key, value) {
   try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch { return false; }
 }
+// Uma movimentação apagada continua apagada nos outros aparelhos, a menos que tenha sido editada (ou desfeita) depois
+const txStamp = (t) => t.updatedAt || t.createdAt || '';
+const isDeleted = (t, deleted) => !!deleted[t.id] && deleted[t.id] >= txStamp(t);
 function normalize(d) {
   const base = freshData();
   const out = {
@@ -174,11 +177,14 @@ function normalize(d) {
     categories: Array.isArray(d.categories) && d.categories.length ? d.categories : base.categories,
     transactions: Array.isArray(d.transactions) ? d.transactions : [],
     analyses: Array.isArray(d.analyses) ? d.analyses : [],
+    deleted: d.deleted && typeof d.deleted === 'object' && !Array.isArray(d.deleted) ? d.deleted : {},
+    daily: Array.isArray(d.daily) ? d.daily : [],
   };
   out.categories = out.categories.map((c) => (c.icon ? c : { ...c, icon: DEFAULT_CATEGORIES.some((d) => d.id === c.id) ? c.id : 'tag' }));
   out.transactions = out.transactions
     .filter((t) => t && t.id && (t.type === 'income' || t.type === 'expense') && Number.isFinite(+t.amount) && /^\d{4}-\d{2}-\d{2}$/.test(t.date))
-    .map((t) => ({ ...t, amount: Math.round(+t.amount * 100) / 100 }));
+    .map((t) => ({ ...t, amount: Math.round(+t.amount * 100) / 100 }))
+    .filter((t) => !isDeleted(t, out.deleted));
   return out;
 }
 let data = normalize(loadJSON(STORAGE_KEY, null) || freshData());
@@ -186,6 +192,7 @@ const settings = loadJSON(SETTINGS_KEY, {});
 function persist() {
   data.updatedAt = new Date().toISOString();
   if (!saveJSON(STORAGE_KEY, data)) toast('Não foi possível salvar neste aparelho. Exporte seus dados.');
+  scheduleSync();
 }
 const saveSettings = () => saveJSON(SETTINGS_KEY, settings);
 
@@ -200,6 +207,7 @@ const state = {
   donutType: 'expense',
   newCatType: 'expense',
   newCatIcon: 'tag',
+  aiMode: 'daily',
 };
 
 const catById = (id) => data.categories.find((c) => c.id === id) || { id, name: 'Sem categoria', icon: 'tag', type: 'expense', slot: null };
@@ -634,6 +642,7 @@ function removeTx(id, { animateRow } = {}) {
   const idx = data.transactions.findIndex((t) => t.id === id);
   if (idx < 0) return;
   const [removed] = data.transactions.splice(idx, 1);
+  data.deleted[removed.id] = new Date().toISOString();
   persist();
   haptic();
   const done = () => render();
@@ -645,7 +654,12 @@ function removeTx(id, { animateRow } = {}) {
   } else done();
   toast('Movimentação apagada', {
     label: 'Desfazer',
-    run: () => { data.transactions.splice(Math.min(idx, data.transactions.length), 0, removed); persist(); render(); },
+    run: () => {
+      delete data.deleted[removed.id];
+      removed.updatedAt = new Date().toISOString();
+      data.transactions.splice(Math.min(idx, data.transactions.length), 0, removed);
+      persist(); render();
+    },
   });
 }
 
@@ -884,7 +898,38 @@ function renderCharts() {
 }
 
 // ---------- Análise com IA ----------
+const aiModeSeg = segmented($('#aiMode'), (v) => { state.aiMode = v; renderAI(); });
+const yesterdayISO = () => { const d = new Date(); d.setDate(d.getDate() - 1); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+function dayLabel(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  const txt = new Date(y, m - 1, d).toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+  return iso === yesterdayISO() ? `Ontem · ${txt}` : txt.charAt(0).toUpperCase() + txt.slice(1);
+}
+const dailyAdapter = (d) => ({ id: `d${d.date.replace(/-/g, '')}`, question: '', createdAt: d.generatedAt, report: d.report });
+function renderDaily() {
+  const box = $('#dailyList');
+  if (!data.daily.length) {
+    box.innerHTML = `<div class="group"><p class="empty">${ghReady()
+      ? 'A primeira análise diária chega no próximo dia às 10h. Ela olha o dia anterior e o mês até agora.'
+      : 'Conecte o GitHub em Ajustes para receber uma análise do Claude todo dia às 10h.'}</p></div>`;
+    return;
+  }
+  box.innerHTML = data.daily.map((d, i) => `
+    <details class="daily" data-date="${d.date}" ${i === 0 ? 'open' : ''}>
+      <summary class="daily__head">
+        <span class="daily__date">${dayLabel(d.date)}</span>
+        <span class="daily__title">${esc(d.report.titulo)}</span>
+      </summary>
+      ${reportHTML(dailyAdapter(d), { daily: true })}
+    </details>`).join('');
+  const first = data.daily[0];
+  if (first) drawReportCharts(dailyAdapter(first));
+}
 function renderAI() {
+  aiModeSeg.set(state.aiMode);
+  $('#aiDaily').hidden = state.aiMode !== 'daily';
+  $('#aiAsk').hidden = state.aiMode !== 'ask';
+  if (state.aiMode === 'daily') { renderDaily(); return; }
   $('#aiNoKey').hidden = !!settings.apiKey;
   const box = $('#aiResults');
   if (box.dataset.busy) return;
@@ -966,7 +1011,7 @@ ${csvLines.join('\n') || '(nenhuma)'}
 
 let anthropicModule;
 async function askAI(question) {
-  if (!settings.apiKey) { renderAI(); toast('Adicione sua chave da API em Ajustes.'); return; }
+  if (!settings.apiKey) { analyzeInClaude(question); return; }
   if (!data.transactions.length) { toast('Adicione movimentações antes de pedir uma análise.'); return; }
   const box = $('#aiResults');
   box.dataset.busy = '1';
@@ -1023,19 +1068,40 @@ async function askAI(question) {
   renderAI();
 }
 
-function reportHTML(a) {
+// ---------- Analisar no app do Claude (usa o plano do Claude, sem API) ----------
+const CLAUDE_APP_PROMPT = `Você é meu analista financeiro pessoal. Abaixo estão meus dados do app S Bank (valores em R$).
+Responda em português do Brasil, de forma direta e prática:
+- Comece com um resumo de 2 a 4 frases.
+- Liste de 3 a 6 observações específicas, citando categorias e valores.
+- Crie 1 a 3 gráficos que ajudem a entender a resposta.
+- Termine com 2 a 4 ações concretas, com valores estimados.
+Baseie cada número nos dados; não invente movimentações.`;
+async function analyzeInClaude(question) {
+  if (!data.transactions.length) { toast('Adicione movimentações antes de pedir uma análise.'); return; }
+  const text = `${CLAUDE_APP_PROMPT}\n\n${buildContext()}\n\nMinha pergunta: ${question}`;
+  const win = window.open('about:blank', '_blank'); // abre já no toque, para o navegador não bloquear
+  try {
+    await navigator.clipboard.writeText(text);
+    toast('Copiado! Cole na conversa do Claude e envie.');
+  } catch {
+    toast('Não consegui copiar automaticamente. Tente de novo.');
+  }
+  if (win) win.location.href = 'https://claude.ai/new'; else location.href = 'https://claude.ai/new';
+}
+
+function reportHTML(a, { daily = false } = {}) {
   const r = a.report;
   const when = new Date(a.createdAt).toLocaleString('pt-BR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-  return `<article class="report">
-    <p class="report__q">${esc(a.question)}</p>
-    <h3>${esc(r.titulo)}</h3>
+  return `<article class="report ${daily ? 'report--daily' : ''}">
+    ${daily ? '' : `<p class="report__q">${esc(a.question)}</p>`}
+    ${daily ? '' : `<h3>${esc(r.titulo)}</h3>`}
     <p class="report__summary">${esc(r.resumo)}</p>
     ${r.insights?.length ? `<ul class="insights">${r.insights.map((i) => `<li class="${esc(i.tipo)}"><span>${esc(i.texto)}</span></li>`).join('')}</ul>` : ''}
     ${(r.graficos || []).map((g, i) => `<div class="report__chart"><h4>${esc(g.titulo)}</h4><p>${esc(g.descricao)}</p>
       <div class="${g.tipo === 'rosca' ? 'donut' : 'chart'}"><canvas id="ai-${a.id}-${i}" role="img" aria-label="${esc(g.titulo)}"></canvas></div>
       ${g.tipo === 'rosca' ? `<ul class="legend" id="ai-${a.id}-${i}-legend"></ul>` : ''}</div>`).join('')}
     ${r.dicas?.length ? `<h4 class="report__tips-title">O que fazer agora</h4><ol class="tips">${r.dicas.map((d) => `<li>${esc(d)}</li>`).join('')}</ol>` : ''}
-    <div class="report__foot"><span>${when}</span><button class="link pressable" data-del-analysis="${a.id}">Remover</button></div>
+    ${daily ? `<div class="report__foot"><span>Gerada pelo Claude · ${when}</span></div>` : `<div class="report__foot"><span>${when}</span><button class="link pressable" data-del-analysis="${a.id}">Remover</button></div>`}
   </article>`;
 }
 
@@ -1101,7 +1167,8 @@ function autosize() {
 }
 
 // ---------- Exportar / importar ----------
-const exportPayload = () => ({ ...data, exportedAt: new Date().toISOString() });
+// As análises diárias já ficam em analises/ no repositório; não vão para o arquivo de dados
+const exportPayload = () => { const { daily, ...rest } = data; return { ...rest, exportedAt: new Date().toISOString() }; };
 async function saveFile(name, content, mime) {
   const blob = new Blob([content], { type: mime });
   const file = new File([blob], name, { type: mime });
@@ -1129,12 +1196,12 @@ function mergeData(incoming, mode) {
   const cats = new Map(data.categories.map((c) => [c.id, c]));
   inc.categories.forEach((c) => { if (!cats.has(c.id)) cats.set(c.id, c); });
   const tx = new Map(data.transactions.map((t) => [t.id, t]));
-  const stamp = (x) => x.updatedAt || x.createdAt || '';
-  inc.transactions.forEach((t) => { const cur = tx.get(t.id); if (!cur || stamp(t) > stamp(cur)) tx.set(t.id, t); });
+  inc.transactions.forEach((t) => { const cur = tx.get(t.id); if (!cur || txStamp(t) > txStamp(cur)) tx.set(t.id, t); });
   const an = new Map(data.analyses.map((a) => [a.id, a]));
   inc.analyses.forEach((a) => an.set(a.id, a));
+  Object.entries(inc.deleted).forEach(([id, at]) => { if (!data.deleted[id] || at > data.deleted[id]) data.deleted[id] = at; });
   data.categories = [...cats.values()];
-  data.transactions = [...tx.values()];
+  data.transactions = [...tx.values()].filter((t) => !isDeleted(t, data.deleted));
   data.analyses = [...an.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 20);
 }
 async function importFile(file) {
@@ -1169,38 +1236,105 @@ async function gh(url, init = {}) {
   }
   return res.json();
 }
-async function ghPush() {
-  const cfg = ghConfig(); if (!cfg) return;
-  const btn = $('#ghPush'); btn.disabled = true;
-  try {
-    const current = await gh(`${cfg.url}?t=${Date.now()}`);
-    await gh(cfg.url, {
-      method: 'PUT',
-      body: JSON.stringify({
-        message: `Atualiza dados do S Bank (${new Date().toLocaleString('pt-BR')})`,
-        content: b64encode(JSON.stringify(exportPayload(), null, 2)),
-        ...(current?.sha ? { sha: current.sha } : {}),
-      }),
-    });
-    settings.lastSync = new Date().toISOString(); saveSettings();
-    haptic();
-    toast('Dados enviados para o GitHub');
-    renderSettings();
-  } catch (e) { toast(`GitHub: ${e.message}`); } finally { btn.disabled = false; }
+// ---------- Sincronização automática com o GitHub ----------
+// Junta o arquivo do repositório com os dados do aparelho e envia de volta, alguns segundos depois de cada mudança.
+const ghReady = () => !!settings.ghToken && /^[\w.-]+\/[\w.-]+$/.test((settings.ghRepo || '').trim());
+let syncTimer = 0, syncing = false, syncAgain = false;
+function scheduleSync() {
+  if (!ghReady()) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => syncNow(), 4000);
 }
-async function ghPull() {
-  const cfg = ghConfig(); if (!cfg) return;
-  const btn = $('#ghPull'); btn.disabled = true;
+const dataSignature = (d) => JSON.stringify([
+  d.categories.map((c) => [c.id, c.name, c.icon, c.type, c.slot]),
+  [...d.transactions].sort((a, b) => a.id.localeCompare(b.id)).map((t) => [t.id, t.type, t.amount, t.category, t.description, t.date, txStamp(t)]),
+  d.analyses.map((a) => a.id),
+  Object.keys(d.deleted).sort(),
+]);
+async function syncNow({ manual = false } = {}) {
+  if (!ghReady()) { if (manual) toast('Preencha repositório e token do GitHub.'); return; }
+  if (!navigator.onLine) { if (manual) toast('Sem conexão com a internet.'); return; }
+  if (syncing) { syncAgain = true; return; }
+  syncing = true;
+  const cfg = ghConfig();
   try {
-    const file = await gh(`${cfg.url}?t=${Date.now()}`);
-    if (!file) { toast(`O arquivo ${cfg.path} ainda não existe no repositório.`); return; }
-    let text = file.content ? b64decode(file.content) : '';
-    if (!text && file.download_url) text = await (await fetch(file.download_url, { headers: { Authorization: `Bearer ${settings.ghToken}` } })).text();
-    mergeData(JSON.parse(text), 'merge');
-    persist();
-    toast('Dados do GitHub sincronizados');
-    refreshAll();
-  } catch (e) { toast(`GitHub: ${e.message}`); } finally { btn.disabled = false; }
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const remote = await gh(`${cfg.url}?t=${Date.now()}`);
+      let remoteSig = null;
+      if (remote?.content) {
+        const remoteData = normalize(JSON.parse(b64decode(remote.content)));
+        remoteSig = dataSignature(remoteData);
+        mergeData(remoteData, 'merge');
+        saveJSON(STORAGE_KEY, data);
+      }
+      if (remoteSig === dataSignature(data)) break; // nada novo para enviar
+      try {
+        await gh(cfg.url, {
+          method: 'PUT',
+          body: JSON.stringify({
+            message: `Atualiza dados do S Bank (${new Date().toLocaleString('pt-BR')})`,
+            content: b64encode(JSON.stringify(exportPayload(), null, 2)),
+            ...(remote?.sha ? { sha: remote.sha } : {}),
+          }),
+        });
+        break;
+      } catch (e) {
+        // outro aparelho enviou no meio do caminho: busca de novo e junta
+        if (attempt === 1 || !/does not match|conflict|409/i.test(e.message)) throw e;
+      }
+    }
+    settings.lastSync = new Date().toISOString(); saveSettings();
+    render();
+    if (settingsSheet.isOpen) renderSettings();
+    if (manual) { haptic(); toast('Sincronizado com o GitHub'); }
+  } catch (e) {
+    if (manual) toast(`GitHub: ${e.message}`);
+  } finally {
+    syncing = false;
+    if (syncAgain) { syncAgain = false; scheduleSync(); }
+  }
+}
+
+// ---------- Análises diárias (geradas pelo Claude Code às 10h, em analises/AAAA-MM-DD.json) ----------
+async function checkDaily({ manual = false } = {}) {
+  if (!ghReady() || !navigator.onLine) return;
+  const base = `https://api.github.com/repos/${settings.ghRepo.trim()}/contents/analises`;
+  try {
+    const list = await gh(`${base}?t=${Date.now()}`);
+    const have = new Set(data.daily.map((d) => d.date));
+    const missing = (Array.isArray(list) ? list : [])
+      .filter((f) => f.type === 'file' && /^\d{4}-\d{2}-\d{2}\.json$/.test(f.name) && !have.has(f.name.slice(0, 10)))
+      .sort((a, b) => b.name.localeCompare(a.name)).slice(0, 14);
+    let added = 0;
+    for (const f of missing) {
+      const file = await gh(`${base}/${encodeURIComponent(f.name)}`);
+      try {
+        const obj = JSON.parse(b64decode(file.content));
+        if (!obj.titulo || !obj.resumo) continue;
+        const { titulo, resumo, insights = [], graficos = [], dicas = [] } = obj;
+        data.daily.push({ date: f.name.slice(0, 10), generatedAt: obj.geradoEm || new Date().toISOString(), report: { titulo, resumo, insights, graficos, dicas } });
+        added++;
+      } catch {}
+    }
+    if (!added) { if (manual) toast('Nenhuma análise diária nova'); return; }
+    data.daily.sort((a, b) => b.date.localeCompare(a.date));
+    data.daily = data.daily.slice(0, 90);
+    saveJSON(STORAGE_KEY, data);
+    if (state.view === 'ia') renderAI();
+    toast(added === 1 ? 'Nova análise diária disponível' : `${added} análises diárias novas`, {
+      label: 'Ver', run: () => { state.aiMode = 'daily'; setView('ia'); },
+    });
+  } catch (e) { if (manual) toast(`GitHub: ${e.message}`); }
+}
+
+// Ao abrir o app: compras do Apple Pay → sincroniza dados → busca análises diárias
+let remoteLast = 0;
+async function refreshRemote({ manual = false } = {}) {
+  if (!manual && Date.now() - remoteLast < 30000) return;
+  remoteLast = Date.now();
+  await checkInbox({ manual });
+  await syncNow({ manual });
+  await checkDaily({ manual });
 }
 
 // ---------- Compras do Apple Pay (atalho do iPhone → pasta inbox/ no GitHub) ----------
@@ -1247,17 +1381,15 @@ function parseInboxFile(name, text) {
   };
 }
 let inboxBusy = false;
-let inboxLast = 0;
 async function checkInbox({ manual = false } = {}) {
   const repo = (settings.ghRepo || '').trim();
   if (!settings.ghToken || !/^[\w.-]+\/[\w.-]+$/.test(repo) || inboxBusy || !navigator.onLine) return;
-  if (!manual && Date.now() - inboxLast < 30000) return;
-  inboxBusy = true; inboxLast = Date.now();
+  inboxBusy = true;
   const base = `https://api.github.com/repos/${repo}/contents/inbox`;
   try {
     const list = await gh(`${base}?t=${Date.now()}`);
     const files = (Array.isArray(list) ? list : []).filter((f) => f.type === 'file' && f.name.endsWith('.json'));
-    if (!files.length) { if (manual) toast('Nenhuma compra nova do Apple Pay'); return; }
+    if (!files.length) return;
     const added = [];
     for (const f of files) {
       const file = await gh(`${base}/${encodeURIComponent(f.name)}`);
@@ -1291,8 +1423,8 @@ function renderIconPicker() {
 function renderSettings() {
   renderIconPicker();
   const n = data.transactions.length;
-  const last = settings.lastSync ? ` Último envio ao GitHub: ${new Date(settings.lastSync).toLocaleString('pt-BR')}.` : '';
-  $('#dataInfo').textContent = `${n} movimentaç${n === 1 ? 'ão salva' : 'ões salvas'} neste aparelho. Exporte o arquivo e envie para o seu repositório de dados.${last}`;
+  const last = settings.lastSync ? ` Última sincronização: ${new Date(settings.lastSync).toLocaleString('pt-BR')}.` : '';
+  $('#dataInfo').textContent = `${n} movimentaç${n === 1 ? 'ão salva' : 'ões salvas'} neste aparelho. Com o GitHub conectado, tudo é sincronizado sozinho.${last}`;
   $('#apiKey').value = settings.apiKey || '';
   $('#ghRepo').value = settings.ghRepo || '';
   $('#ghPath').value = settings.ghPath || '';
@@ -1414,6 +1546,13 @@ function bind() {
   // IA
   $('#aiForm').addEventListener('submit', (e) => { e.preventDefault(); const q = $('#aiQuestion').value.trim(); if (q) askAI(q); });
   $('#aiQuestion').addEventListener('input', autosize);
+  $('#openClaude').addEventListener('click', () => {
+    analyzeInClaude($('#aiQuestion').value.trim() || 'Analise meus ganhos e gastos deste mês. O que se destacou e onde estou gastando demais?');
+  });
+  $('#dailyList').addEventListener('toggle', (e) => {
+    const d = data.daily.find((x) => x.date === e.target.dataset?.date);
+    if (e.target.open && d) drawReportCharts(dailyAdapter(d));
+  }, true);
   $('#aiQuestion').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && matchMedia('(pointer: fine)').matches) { e.preventDefault(); $('#aiForm').requestSubmit(); } });
 
   // Ajustes
@@ -1425,14 +1564,20 @@ function bind() {
   bindSetting('#ghRepo', 'ghRepo');
   bindSetting('#ghPath', 'ghPath');
   bindSetting('#ghToken', 'ghToken');
-  $('#ghPush').addEventListener('click', ghPush);
-  $('#ghPull').addEventListener('click', ghPull);
-  $('#inboxCheck').addEventListener('click', () => checkInbox({ manual: true }));
+  $('#ghSync').addEventListener('click', async (e) => {
+    e.currentTarget.disabled = true;
+    await refreshRemote({ manual: true });
+    e.currentTarget.disabled = false;
+  });
   $('#catAddForm').addEventListener('submit', addCategory);
   $('#loadDemo').addEventListener('click', () => { if (!data.transactions.length || confirm('Adicionar movimentações de exemplo aos seus dados?')) loadDemo(); });
   $('#wipeData').addEventListener('click', () => {
     if (!confirm('Apagar todas as movimentações, categorias e análises deste aparelho? Exporte antes se quiser guardar.')) return;
-    data = freshData(); persist(); settingsSheet.close(); setView('resumo'); toast('Dados apagados');
+    const now = new Date().toISOString();
+    const deleted = { ...data.deleted };
+    data.transactions.forEach((t) => (deleted[t.id] = now));
+    data = freshData(); data.deleted = deleted;
+    persist(); settingsSheet.close(); setView('resumo'); toast('Dados apagados');
   });
 
   // Recalcula posições e cores quando a tela ou o tema mudam
@@ -1452,9 +1597,9 @@ placeIndicator(false);
 if (location.hash === '#novo') openEntry();
 
 navigator.storage?.persist?.().catch(() => {});
-// Busca compras do Apple Pay ao abrir e sempre que o app volta para a tela
-checkInbox();
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkInbox(); });
+// Busca compras, sincroniza e traz análises ao abrir e sempre que o app volta para a tela
+refreshRemote();
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshRemote(); });
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }

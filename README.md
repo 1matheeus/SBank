@@ -15,6 +15,10 @@ Site do S Bank com landing page (`/`) e um **app de finanças pessoais** (`/app/
 
 Uma automação “Transação” do app Atalhos grava cada compra paga com o iPhone em `inbox/compra-AAAAMMDD-HHmmss.json` no repositório privado de dados. Ao abrir, o app importa esses arquivos para o extrato, sugere a categoria (pela última vez que você usou aquele estabelecimento ou pelo nome) e apaga o arquivo.
 
+### Sincronização e análises diárias
+
+Com o GitHub conectado em Ajustes, o app envia as mudanças sozinho para `data/sbank-dados.json` no repositório privado de dados (juntando com o que veio de outros aparelhos e respeitando exclusões). Todo dia, às 9h41 de Brasília, uma tarefa agendada do Claude Code segue `ROTINA.md` daquele repositório e grava `analises/AAAA-MM-DD.json` com a análise do dia anterior; o app mostra em **IA → Diárias**. Na aba **IA → Perguntar**, o botão “Analisar no app do Claude” copia os dados e a pergunta para colar no app do Claude, usando o plano em vez da API.
+
 ### Onde ficam os dados
 
 O arquivo exportado vai em `data/`. O workflow `.github/workflows/pages.yml` copia o site e o app para a branch `gh-pages` (fonte do Pages) a cada push na `main`; a pasta `data/` nunca é publicada. Como o repositório é público, guarde seus dados em um repositório privado separado.
