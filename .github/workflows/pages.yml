@@ -1,7 +1,8 @@
 name: Publicar no GitHub Pages
 
-# A cada push na main, copia o site e o app para a branch gh-pages,
-# que é a fonte do GitHub Pages. A pasta data/ (seus dados) NUNCA é publicada.
+# A cada push na main, publica o site e o app. Funciona com as duas opções de
+# Settings → Pages → Source ("GitHub Actions" ou "Deploy from a branch: gh-pages").
+# A pasta data/ (seus dados) NUNCA é publicada.
 on:
   push:
     branches: [main]
@@ -9,6 +10,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: pages
@@ -17,6 +20,9 @@ concurrency:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - name: Montar site
@@ -24,7 +30,17 @@ jobs:
           mkdir _site
           cp -r index.html styles.css script.js assets app _site/
           touch _site/.nojekyll
-      - name: Enviar para a branch gh-pages
+
+      # Fonte "GitHub Actions"
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+
+      # Fonte "Deploy from a branch" (gh-pages)
+      - name: Atualizar a branch gh-pages
         run: |
           cd _site
           git init -q -b gh-pages
@@ -33,3 +49,11 @@ jobs:
           git add -A
           git commit -q -m "Publica ${GITHUB_SHA::7}"
           git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
+      # Pushes do GITHUB_TOKEN não disparam o build do Pages sozinhos; pede o build explicitamente
+      - name: Pedir novo build do Pages
+        if: steps.deployment.outcome != 'success'
+        run: |
+          curl -fsS -X POST \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/pages/builds"
