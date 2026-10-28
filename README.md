@@ -31,13 +31,14 @@ Ao alterar arquivos do app, aumente a versão de `CACHE` em `app/sw.js` para os 
 | Token | Cor | Uso |
 |---|---|---|
 | Verde dinheiro | `#2F6B4F` (escuro: `#86C9A3`) | Cor principal: botões, abas, links |
+| Grafite | `#1C1C1F` | Fundo do ícone do app e do modo escuro |
 | Sálvia | `#E3EBE4` | Cartão de saldo e superfícies suaves |
 | Dourado suave | `#E6D39A` | Ponto da logo |
 | Grafite | `#151A16` / fundo `#F3F4F1` | Texto e fundos neutros |
 
 - **Tipografia:** fonte do sistema (SF Pro no iPhone e no Mac), com espaçamento ajustado por tamanho e respeito ao tamanho de texto do iOS.
 - **Movimento:** molas interrompíveis (amortecimento + resposta, como no iOS), painéis arrastáveis com momento, deslizar para apagar e barra de abas de vidro. Respeita “Reduzir movimento” e “Reduzir transparência”.
-- **Logo:** um "S" geométrico de traço contínuo dentro de um quadrado arredondado verde sólido. O ponto dourado no canto superior representa rendimento.
+- **Logo:** um "S" geométrico de traço contínuo em verde-claro (`#CFE6D7`) sobre grafite. O ponto dourado no canto superior representa rendimento.
   - `assets/logo-mark.svg`: só o símbolo (favicon e ícone do app)
   - `assets/logo.svg`: símbolo com o nome
 

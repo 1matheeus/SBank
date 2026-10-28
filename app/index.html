@@ -6,7 +6,7 @@
   <title>S Bank</title>
   <meta name="description" content="S Bank: seus ganhos e gastos, com gráficos e análise por IA.">
   <meta name="theme-color" content="#F3F4F1" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0D0F0E" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#0B0B0C" media="(prefers-color-scheme: dark)">
   <script>try { const t = localStorage.getItem('sbank:theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch {}</script>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
@@ -283,9 +283,9 @@
         <div class="group" id="catManage"></div>
         <form class="group form cat-add" id="catAddForm">
           <label class="form__row"><span>Nova</span>
-            <input id="catEmoji" class="cat-add__emoji" maxlength="4" placeholder="🏷️" aria-label="Emoji">
             <input id="catName" maxlength="24" placeholder="Nome" aria-label="Nome da categoria" required>
           </label>
+          <div class="form__row form__row--icons"><div class="icon-pick" id="iconPick" role="radiogroup" aria-label="Ícone da categoria"></div></div>
           <div class="form__row">
             <div class="segmented segmented--inline" id="catType">
               <span class="segmented__thumb"></span>

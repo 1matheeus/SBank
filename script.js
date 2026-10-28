@@ -28,7 +28,7 @@ function syncTheme() {
   document.querySelector('.icon-sun').hidden = !dark;
   document.querySelectorAll('[data-dark]').forEach((img) => (img.src = dark ? img.dataset.dark : img.dataset.light));
   document.querySelectorAll('meta[name="theme-color"]').forEach((m) => {
-    m.content = root.dataset.theme ? (dark ? '#0D0F0E' : '#FBFBF9') : m.media.includes('dark') ? '#0D0F0E' : '#FBFBF9';
+    m.content = root.dataset.theme ? (dark ? '#0B0B0C' : '#FBFBF9') : m.media.includes('dark') ? '#0B0B0C' : '#FBFBF9';
   });
 }
 document.getElementById('themeBtn').addEventListener('click', () => {
