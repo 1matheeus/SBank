@@ -26,14 +26,14 @@ Ao alterar arquivos do app, aumente a versão de `CACHE` em `app/sw.js` para os 
 
 | Token | Cor | Uso |
 |---|---|---|
-| Violeta | `#7C5CFF` | Cor primária, início do gradiente |
-| Menta | `#00D4A6` | Crescimento, valores positivos, fim do gradiente |
-| Lima | `#D9FF5C` | Acento ("faísca" da logo, destaques) |
-| Ink | `#0B0F1A` | Texto e seções escuras |
+| Verde dinheiro | `#2F6B4F` (escuro: `#86C9A3`) | Cor principal: botões, abas, links |
+| Sálvia | `#E3EBE4` | Cartão de saldo e superfícies suaves |
+| Dourado suave | `#E6D39A` | Ponto da logo |
+| Grafite | `#151A16` / fundo `#F3F4F1` | Texto e fundos neutros |
 
 - **Tipografia:** fonte do sistema (SF Pro no iPhone e no Mac), com espaçamento ajustado por tamanho e respeito ao tamanho de texto do iOS.
 - **Movimento:** molas interrompíveis (amortecimento + resposta, como no iOS), painéis arrastáveis com momento, deslizar para apagar e barra de abas de vidro. Respeita “Reduzir movimento” e “Reduzir transparência”.
-- **Logo:** um "S" geométrico de traço contínuo dentro de um quadrado arredondado com gradiente violeta→menta. A faísca lima no canto superior representa crescimento e rendimento.
+- **Logo:** um "S" geométrico de traço contínuo dentro de um quadrado arredondado verde sólido. O ponto dourado no canto superior representa rendimento.
   - `assets/logo-mark.svg`: só o símbolo (favicon e ícone do app)
   - `assets/logo.svg`: símbolo com o nome
 

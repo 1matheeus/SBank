@@ -182,6 +182,33 @@ function groupByCategory(list, type) {
   return [...map.entries()].map(([id, total]) => ({ cat: catById(id), total })).sort((a, b) => b.total - a.total);
 }
 
+// ---------- Tema claro / escuro ----------
+const THEME_KEY = 'sbank:theme';
+const darkMQ = matchMedia('(prefers-color-scheme: dark)');
+const getTheme = () => { try { return localStorage.getItem(THEME_KEY) || 'auto'; } catch { return 'auto'; } };
+function setThemeAttr(theme) {
+  const root = document.documentElement;
+  if (theme === 'auto') delete root.dataset.theme; else root.dataset.theme = theme;
+  const dark = isDark();
+  $$('meta[name="theme-color"]').forEach((m) => {
+    m.content = theme === 'auto' ? (m.media.includes('dark') ? '#0D0F0E' : '#F3F4F1') : dark ? '#0D0F0E' : '#F3F4F1';
+  });
+  $$('.theme-icon').forEach((u) => u.setAttribute('href', dark ? '#i-sun' : '#i-moon'));
+  $$('.theme-label').forEach((l) => (l.textContent = dark ? 'Modo claro' : 'Modo escuro'));
+}
+function applyTheme(theme, animate = true) {
+  try { if (theme === 'auto') localStorage.removeItem(THEME_KEY); else localStorage.setItem(THEME_KEY, theme); } catch {}
+  segments.get('themeSeg')?.set(theme);
+  const swap = () => { setThemeAttr(theme); render(); };
+  if (!animate || reducedMotion.matches) { swap(); return; }
+  // Transição suave entre os modos, sem salto brusco de brilho
+  if (document.startViewTransition) { document.startViewTransition(swap); return; }
+  document.documentElement.classList.add('theme-fade');
+  swap();
+  setTimeout(() => document.documentElement.classList.remove('theme-fade'), 420);
+}
+const toggleTheme = () => applyTheme(isDark() ? 'light' : 'dark');
+
 // ---------- Aviso flutuante (com desfazer) ----------
 const toastEl = $('#toast');
 const toastSpring = new Spring({ value: -140, onUpdate: (y) => (toastEl.style.transform = `translate(-50%, ${y}px)`) });
@@ -813,13 +840,7 @@ function renderCharts() {
         label: 'Acumulado', data: cumulative, borderColor: th.expense, borderWidth: 2, tension: 0.35, pointRadius: 0,
         pointHoverRadius: 5, pointHoverBackgroundColor: th.expense, pointHoverBorderColor: th.surface, pointHoverBorderWidth: 2,
         fill: true,
-        backgroundColor: (ctx) => {
-          const { ctx: c, chartArea } = ctx.chart;
-          if (!chartArea) return th.expense + '22';
-          const grad = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-          grad.addColorStop(0, th.expense + '38'); grad.addColorStop(1, th.expense + '00');
-          return grad;
-        },
+        backgroundColor: th.expense + '1a',
       }],
     },
     options: lineOpts,
@@ -1147,6 +1168,8 @@ async function ghPull() {
 }
 
 // ---------- Ajustes ----------
+const themeSeg = segmented($('#themeSeg'), (v) => applyTheme(v));
+themeSeg.set(getTheme(), false);
 const catTypeSeg = segmented($('#catType'), (v) => { state.newCatType = v; });
 catTypeSeg.set('expense', false);
 function renderSettings() {
@@ -1235,6 +1258,7 @@ function bind() {
   document.addEventListener('touchstart', () => {}, { passive: true });
 
   document.addEventListener('click', (e) => {
+    if (e.target.closest('[data-theme-toggle]')) { toggleTheme(); return; }
     const t = e.target.closest('[data-view],[data-new],[data-settings],[data-edit],[data-cat],[data-del-cat],[data-del-analysis],[data-prompt],[data-filter-cat],[data-key],#demoInline');
     if (!t) return;
     if (t.dataset.view) setView(t.dataset.view);
@@ -1294,10 +1318,11 @@ function bind() {
 
   // Recalcula posições e cores quando a tela ou o tema mudam
   addEventListener('resize', () => { placeIndicator(false); syncSegments(); });
-  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => render());
+  darkMQ.addEventListener('change', () => { if (getTheme() === 'auto') { setThemeAttr('auto'); render(); } });
 }
 
 // ---------- Início ----------
+setThemeAttr(getTheme());
 bind();
 let initialView = 'resumo';
 try { initialView = sessionStorage.getItem('sbank:view') || 'resumo'; } catch {}
