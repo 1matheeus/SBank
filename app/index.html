@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>S Bank</title>
+  <meta name="description" content="S Bank: seus ganhos e gastos, com gráficos e análise por IA.">
+  <meta name="theme-color" content="#F3F4F1" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0B0B0C" media="(prefers-color-scheme: dark)">
+  <script>try { const t = localStorage.getItem('sbank:theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch {}</script>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="S Bank">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/logo-mark.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="stylesheet" href="app.css">
+  <script src="vendor/chart.umd.js" defer></script>
+  <script src="app.js" type="module"></script>
+</head>
+<body>
+  <!-- Ícones (estilo SF Symbols) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-resumo" viewBox="0 0 24 24"><path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z"/></symbol>
+    <symbol id="i-extrato" viewBox="0 0 24 24"><path d="M6.5 3.5h11a1 1 0 0 1 1 1v16l-2.6-1.6-2.4 1.6-2.5-1.6-2.4 1.6-2.6-1.6V4.5a1 1 0 0 1 1-1zM9 8.5h6M9 12h6M9 15.5h3.5"/></symbol>
+    <symbol id="i-graficos" viewBox="0 0 24 24"><path d="M5 20v-7M10 20V5M15 20v-9M20 20v-4"/></symbol>
+    <symbol id="i-ia" viewBox="0 0 24 24"><path d="M11 3.5 12.9 8l4.6 1.9-4.6 1.9L11 16.4l-1.9-4.6L4.5 9.9 9.1 8zM18 14.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4z"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.6-2-3.4-2.4 1a7.4 7.4 0 0 0-2.6-1.5L14 2.5h-4l-.4 2.5A7.4 7.4 0 0 0 7 6.5l-2.4-1-2 3.4 2 1.6a7.6 7.6 0 0 0 0 3l-2 1.6 2 3.4 2.4-1a7.4 7.4 0 0 0 2.6 1.5l.4 2.5h4l.4-2.5a7.4 7.4 0 0 0 2.6-1.5l2.4 1 2-3.4z"/></symbol>
+    <symbol id="i-left" viewBox="0 0 24 24"><path d="M14.5 6 8.5 12l6 6"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="m9.5 6 6 6-6 6"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 4.5 4.5"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4.5 6.5h15M9.5 6.5V4.5h5v2M6.5 6.5l.8 12.2a1.5 1.5 0 0 0 1.5 1.3h6.4a1.5 1.5 0 0 0 1.5-1.3l.8-12.2M10 10.5v6M14 10.5v6"/></symbol>
+    <symbol id="i-delete" viewBox="0 0 24 24"><path d="M9 5.5h10.5a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H9L3.5 12z"/><path d="m11.5 9.5 5 5M16.5 9.5l-5 5"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
+    <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 2.5 14.2 9.8 21.5 12l-7.3 2.2L12 21.5l-2.2-7.3L2.5 12l7.3-2.2z"/></symbol>
+  </svg>
+
+  <div class="app" id="app">
+    <aside class="sidebar" aria-label="Navegação">
+      <a class="sidebar__brand" href="../">
+        <img src="icons/logo-mark.svg" alt="" width="28" height="28">
+        <span>S Bank</span>
+      </a>
+      <button class="sidebar__new pressable" data-new>
+        <svg><use href="#i-plus"/></svg><span>Novo aporte</span>
+      </button>
+      <nav class="sidebar__nav">
+        <button class="side-item pressable" data-view="resumo"><svg><use href="#i-resumo"/></svg><span>Resumo</span></button>
+        <button class="side-item pressable" data-view="extrato"><svg><use href="#i-extrato"/></svg><span>Extrato</span></button>
+        <button class="side-item pressable" data-view="graficos"><svg><use href="#i-graficos"/></svg><span>Gráficos</span></button>
+        <button class="side-item pressable" data-view="ia"><svg><use href="#i-ia"/></svg><span>Análise IA</span></button>
+      </nav>
+      <button class="side-item side-item--bottom pressable" data-theme-toggle><svg><use class="theme-icon" href="#i-moon"/></svg><span class="theme-label">Modo escuro</span></button>
+      <button class="side-item pressable" data-settings><svg><use href="#i-gear"/></svg><span>Ajustes</span></button>
+    </aside>
+
+    <div class="main" id="main">
+      <header class="navbar" id="navbar">
+        <button class="navbar__btn navbar__btn--left pressable" data-theme-toggle aria-label="Alternar modo claro e escuro"><svg><use class="theme-icon" href="#i-moon"/></svg></button>
+        <span class="navbar__title" id="navTitle">Resumo</span>
+        <button class="navbar__btn pressable" data-settings aria-label="Ajustes"><svg><use href="#i-gear"/></svg></button>
+      </header>
+
+      <div class="large-title" id="largeTitle">
+        <h1 id="viewTitle">Resumo</h1>
+        <div class="month" id="monthNav">
+          <button class="month__btn pressable" id="prevMonth" aria-label="Mês anterior"><svg><use href="#i-left"/></svg></button>
+          <span class="month__label" id="monthLabel">—</span>
+          <button class="month__btn pressable" id="nextMonth" aria-label="Próximo mês"><svg><use href="#i-right"/></svg></button>
+        </div>
+      </div>
+
+      <main class="views">
+        <!-- RESUMO -->
+        <section class="view" id="view-resumo" data-title="Resumo">
+          <div class="card-balance">
+            <div class="card-balance__top">
+              <img src="icons/logo-mark.svg" alt="" width="26" height="26">
+              <span>Saldo total</span>
+            </div>
+            <strong class="card-balance__value" id="totalBalance">R$ 0,00</strong>
+            <span class="card-balance__sub" id="balanceSub">&nbsp;</span>
+          </div>
+
+          <div class="tiles">
+            <div class="tile"><span class="tile__label">Entradas</span><strong class="tile__value pos" id="monthIncome">R$ 0</strong></div>
+            <div class="tile"><span class="tile__label">Saídas</span><strong class="tile__value neg" id="monthExpense">R$ 0</strong></div>
+            <div class="tile"><span class="tile__label">Sobrou</span><strong class="tile__value" id="monthNet">R$ 0</strong><span class="tile__foot" id="savingsRate"></span></div>
+          </div>
+
+          <div class="section">
+            <div class="section__head"><h2>Para onde foi o dinheiro</h2><button class="link pressable" data-view="graficos">Gráficos</button></div>
+            <div class="group" id="topCategories"></div>
+          </div>
+
+          <div class="section">
+            <div class="section__head"><h2>Recentes</h2><button class="link pressable" data-view="extrato">Extrato</button></div>
+            <ul class="group list" id="recentList"></ul>
+          </div>
+        </section>
+
+        <!-- EXTRATO -->
+        <section class="view" id="view-extrato" data-title="Extrato">
+          <label class="search">
+            <svg><use href="#i-search"/></svg>
+            <input type="search" id="search" placeholder="Buscar" aria-label="Buscar no extrato" enterkeyhint="search">
+          </label>
+          <div class="segmented" id="typeFilter" role="tablist">
+            <span class="segmented__thumb"></span>
+            <button class="segmented__btn" data-value="all">Tudo</button>
+            <button class="segmented__btn" data-value="income">Entradas</button>
+            <button class="segmented__btn" data-value="expense">Saídas</button>
+          </div>
+          <div class="chips-scroll" id="catFilter"></div>
+          <div class="tiles tiles--compact" id="statementSummary"></div>
+          <div id="statement"></div>
+          <p class="hint" id="swipeHint">Deslize uma movimentação para a esquerda para apagar.</p>
+        </section>
+
+        <!-- GRÁFICOS -->
+        <section class="view" id="view-graficos" data-title="Gráficos">
+          <div class="segmented" id="donutType" role="tablist">
+            <span class="segmented__thumb"></span>
+            <button class="segmented__btn" data-value="expense">Saídas</button>
+            <button class="segmented__btn" data-value="income">Entradas</button>
+          </div>
+          <div class="charts">
+            <div class="panel panel--donut">
+              <h2 class="panel__title" id="donutTitle">Saídas por categoria</h2>
+              <div class="donut">
+                <canvas id="donutChart" role="img" aria-label="Gráfico de rosca por categoria"></canvas>
+                <div class="donut__center"><span>Total</span><strong id="donutTotal">R$ 0</strong></div>
+              </div>
+              <ul class="legend" id="donutLegend"></ul>
+            </div>
+            <div class="panel">
+              <h2 class="panel__title">Entradas e saídas</h2>
+              <p class="panel__sub">Últimos 6 meses</p>
+              <div class="chart"><canvas id="barChart" role="img" aria-label="Entradas e saídas dos últimos 6 meses"></canvas></div>
+            </div>
+            <div class="panel">
+              <h2 class="panel__title">Gasto acumulado</h2>
+              <p class="panel__sub" id="lineSub">Ao longo do mês</p>
+              <div class="chart"><canvas id="lineChart" role="img" aria-label="Gasto acumulado ao longo do mês"></canvas></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- IA -->
+        <section class="view" id="view-ia" data-title="Análise IA">
+          <div class="segmented" id="aiMode" role="tablist">
+            <span class="segmented__thumb"></span>
+            <button class="segmented__btn" data-value="daily">Diárias</button>
+            <button class="segmented__btn" data-value="ask">Perguntar</button>
+          </div>
+
+          <div id="aiDaily">
+            <div class="ai-intro">
+              <div class="ai-intro__orb"><svg><use href="#i-sparkle"/></svg></div>
+              <p>Todo dia às 10h, o Claude analisa o dia anterior e o mês até agora, usando o seu plano.</p>
+            </div>
+            <div id="dailyList"></div>
+          </div>
+
+          <div id="aiAsk" hidden>
+            <div class="ai-intro">
+              <div class="ai-intro__orb"><svg><use href="#i-sparkle"/></svg></div>
+              <p>Pergunte sobre seus gastos. A IA lê suas movimentações e responde com um resumo, alertas e gráficos.</p>
+            </div>
+            <div class="chips-scroll ai-suggestions">
+              <button class="chip pressable" data-prompt="Analise meus ganhos e gastos deste mês. O que se destacou e onde estou gastando demais?">Analisar o mês</button>
+              <button class="chip pressable" data-prompt="Compare meus últimos 6 meses. Quais categorias cresceram, quais caíram e qual a tendência?">Comparar meses</button>
+              <button class="chip pressable" data-prompt="Onde posso economizar? Sugira cortes concretos com valores estimados por mês.">Onde economizar</button>
+              <button class="chip pressable" data-prompt="Monte um orçamento mensal por categoria baseado no meu histórico, buscando guardar pelo menos 20% do que ganho.">Criar orçamento</button>
+            </div>
+            <form class="composer" id="aiForm">
+              <textarea id="aiQuestion" rows="1" placeholder="Pergunte algo…" aria-label="Pergunta para a IA"></textarea>
+              <button class="composer__send pressable" type="submit" id="aiSend" aria-label="Enviar"><svg><use href="#i-up"/></svg></button>
+            </form>
+            <button class="btn btn--tint btn--block pressable claude-btn" id="openClaude">Analisar no app do Claude</button>
+            <p class="group-foot" id="aiNoKey">Sem chave da API, as perguntas abrem no app do Claude usando o seu plano: os dados são copiados e é só colar na conversa. Para respostas aqui dentro, adicione uma chave em Ajustes.</p>
+            <div id="aiResults"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Barra de abas flutuante -->
+  <nav class="tabbar" id="tabbar" aria-label="Abas">
+    <div class="tabbar__pill" id="tabPill">
+      <span class="tabbar__indicator" id="tabIndicator"></span>
+      <button class="tab" data-tab="resumo"><svg><use href="#i-resumo"/></svg><span>Resumo</span></button>
+      <button class="tab" data-tab="extrato"><svg><use href="#i-extrato"/></svg><span>Extrato</span></button>
+      <button class="tab" data-tab="graficos"><svg><use href="#i-graficos"/></svg><span>Gráficos</span></button>
+      <button class="tab" data-tab="ia"><svg><use href="#i-ia"/></svg><span>IA</span></button>
+    </div>
+    <button class="tabbar__add pressable" data-new aria-label="Novo aporte"><svg><use href="#i-plus"/></svg></button>
+  </nav>
+
+  <!-- Painel: novo aporte -->
+  <div class="sheet" id="sheet-entry" role="dialog" aria-modal="true" aria-labelledby="entryTitle" hidden>
+    <div class="sheet__scrim" data-dismiss></div>
+    <div class="sheet__panel">
+      <div class="sheet__header" data-grab>
+        <span class="sheet__grip"></span>
+        <button class="sheet__action pressable" data-dismiss>Cancelar</button>
+        <h2 class="sheet__title" id="entryTitle">Novo aporte</h2>
+        <button class="sheet__action sheet__action--icon pressable" id="deleteBtn" aria-label="Apagar movimentação" hidden><svg><use href="#i-trash"/></svg></button>
+      </div>
+      <form class="sheet__body entry" id="entryForm" autocomplete="off">
+        <div class="segmented" id="entryType" role="radiogroup" aria-label="Tipo">
+          <span class="segmented__thumb"></span>
+          <button type="button" class="segmented__btn" data-value="expense">Saída</button>
+          <button type="button" class="segmented__btn" data-value="income">Entrada</button>
+        </div>
+
+        <output class="amount" id="amount" aria-live="polite"><span class="amount__sign" id="amountSign">−</span><span id="amountValue">R$ 0,00</span></output>
+
+        <div class="cat-picker" id="categoryChips" role="radiogroup" aria-label="Categoria"></div>
+
+        <div class="group form">
+          <label class="form__row"><span>Descrição</span><input id="desc" type="text" placeholder="Opcional" maxlength="80" enterkeyhint="done"></label>
+          <label class="form__row"><span>Data</span><input id="date" type="date" required></label>
+        </div>
+
+        <div class="keypad" id="keypad" aria-label="Teclado numérico">
+          <button type="button" data-key="1">1</button><button type="button" data-key="2">2</button><button type="button" data-key="3">3</button>
+          <button type="button" data-key="4">4</button><button type="button" data-key="5">5</button><button type="button" data-key="6">6</button>
+          <button type="button" data-key="7">7</button><button type="button" data-key="8">8</button><button type="button" data-key="9">9</button>
+          <button type="button" data-key="00">00</button><button type="button" data-key="0">0</button>
+          <button type="button" data-key="del" aria-label="Apagar dígito"><svg><use href="#i-delete"/></svg></button>
+        </div>
+
+        <button type="submit" class="btn btn--primary btn--block pressable" id="saveBtn">Adicionar</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Painel: ajustes -->
+  <div class="sheet" id="sheet-settings" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" hidden>
+    <div class="sheet__scrim" data-dismiss></div>
+    <div class="sheet__panel">
+      <div class="sheet__header" data-grab>
+        <span class="sheet__grip"></span>
+        <span></span>
+        <h2 class="sheet__title" id="settingsTitle">Ajustes</h2>
+        <button class="sheet__action sheet__action--bold pressable" data-dismiss>OK</button>
+      </div>
+      <div class="sheet__body settings">
+        <h3 class="group-title">Aparência</h3>
+        <div class="group form">
+          <div class="form__row">
+            <div class="segmented" id="themeSeg" style="flex:1">
+              <span class="segmented__thumb"></span>
+              <button type="button" class="segmented__btn" data-value="auto">Automático</button>
+              <button type="button" class="segmented__btn" data-value="light">Claro</button>
+              <button type="button" class="segmented__btn" data-value="dark">Escuro</button>
+            </div>
+          </div>
+        </div>
+        <p class="group-foot">“Automático” acompanha o modo do iPhone.</p>
+
+        <h3 class="group-title">Seus dados</h3>
+        <div class="group">
+          <button class="row-btn pressable" id="exportJson">Exportar dados (.json)</button>
+          <button class="row-btn pressable" id="exportCsv">Exportar extrato (.csv)</button>
+          <label class="row-btn pressable">Importar arquivo<input type="file" id="importFile" accept="application/json,.json" hidden></label>
+        </div>
+        <p class="group-foot" id="dataInfo"></p>
+
+        <h3 class="group-title">Sincronizar com o GitHub</h3>
+        <div class="group form">
+          <label class="form__row"><span>Repositório</span><input id="ghRepo" placeholder="usuario/sbank-dados" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
+          <label class="form__row"><span>Arquivo</span><input id="ghPath" placeholder="data/sbank-dados.json" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
+          <label class="form__row"><span>Token</span><input id="ghToken" type="password" placeholder="github_pat_…" autocapitalize="off" spellcheck="false"></label>
+        </div>
+        <div class="group">
+          <button class="row-btn pressable" id="ghSync">Sincronizar agora</button>
+        </div>
+        <p class="group-foot">Use um repositório privado e um token “fine-grained” com permissão Contents: Read and write somente nele. Com o GitHub conectado, o app sincroniza sozinho: envia suas mudanças, traz as compras do Apple Pay (pasta inbox/) e as análises diárias (pasta analises/).</p>
+
+        <h3 class="group-title">Análise com IA</h3>
+        <div class="group form">
+          <label class="form__row"><span>Chave da API</span><input id="apiKey" type="password" placeholder="sk-ant-…" autocapitalize="off" spellcheck="false"></label>
+        </div>
+        <p class="group-foot">Crie a chave em console.anthropic.com. Ela fica só neste aparelho e nunca entra no arquivo exportado. Cada análise é cobrada na sua conta da Anthropic.</p>
+
+        <h3 class="group-title">Categorias</h3>
+        <div class="group" id="catManage"></div>
+        <form class="group form cat-add" id="catAddForm">
+          <label class="form__row"><span>Nova</span>
+            <input id="catName" maxlength="24" placeholder="Nome" aria-label="Nome da categoria" required>
+          </label>
+          <div class="form__row form__row--icons"><div class="icon-pick" id="iconPick" role="radiogroup" aria-label="Ícone da categoria"></div></div>
+          <div class="form__row">
+            <div class="segmented segmented--inline" id="catType">
+              <span class="segmented__thumb"></span>
+              <button type="button" class="segmented__btn" data-value="expense">Saída</button>
+              <button type="button" class="segmented__btn" data-value="income">Entrada</button>
+            </div>
+            <button class="btn btn--tint btn--small pressable" type="submit">Criar</button>
+          </div>
+        </form>
+
+        <h3 class="group-title">Outros</h3>
+        <div class="group">
+          <button class="row-btn pressable" id="loadDemo">Carregar dados de exemplo</button>
+          <button class="row-btn row-btn--danger pressable" id="wipeData">Apagar todos os dados</button>
+        </div>
+        <p class="group-foot center">S Bank · seus dados ficam neste aparelho até você exportar.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"><span id="toastText"></span><button class="toast__action" id="toastAction" hidden></button></div>
+  <label class="haptic" aria-hidden="true"><input type="checkbox" switch tabindex="-1" id="hapticSwitch"></label>
+</body>
+</html>
